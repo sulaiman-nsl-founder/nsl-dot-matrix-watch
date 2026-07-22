@@ -69,9 +69,26 @@ Recommended:
 
 Then click **Connect to Watch** and choose `Nsl Watch`.
 
+## GitHub Pages Hosting
+
+This repository includes a root `index.html` that redirects to the companion app, so it can be hosted directly with GitHub Pages.
+
+After pushing to GitHub:
+
+1. Open the repository on GitHub.
+2. Go to **Settings > Pages**.
+3. Set **Source** to **Deploy from a branch**.
+4. Select branch `main` and folder `/root`.
+5. Save.
+
+Your hosted app will be available at:
+
+```text
+https://YOUR_USERNAME.github.io/YOUR_REPOSITORY/
+```
+
 ## Current Notes
 
 - The web app auto-syncs every 60 seconds while connected.
 - The firmware keeps ticking after a sync, but date rollover is not fully handled locally. Regular BLE sync keeps the date correct.
 - E-paper refresh is intentionally limited to once per minute to avoid unnecessary full-screen updates.
-
