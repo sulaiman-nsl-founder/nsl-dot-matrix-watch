@@ -180,10 +180,13 @@ function renderWatch(h, m, wd, d, mo, y) {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, 200, 200);
 
+  // Convert hour to 12-hour format for display (1..12)
+  const displayHour = (h % 12 === 0) ? 12 : (h % 12);
+
   // Build active pixel set
   const active = new Set([
-    ...activeSet(Math.floor(h/10), D1_COL, H_ROW),
-    ...activeSet(h%10,             D2_COL, H_ROW),
+    ...activeSet(Math.floor(displayHour/10), D1_COL, H_ROW),
+    ...activeSet(displayHour%10,             D2_COL, H_ROW),
     ...activeSet(Math.floor(m/10), D1_COL, M_ROW),
     ...activeSet(m%10,             D2_COL, M_ROW),
   ]);
@@ -207,8 +210,11 @@ function tick() {
   const h=n.getHours(), m=n.getMinutes(), s=n.getSeconds();
   const wd=n.getDay(), d=n.getDate(), mo=n.getMonth(), y=n.getFullYear();
 
+  const displayHour = (h % 12 === 0) ? 12 : (h % 12);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+
   document.getElementById('bigtime').textContent =
-    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    `${String(displayHour).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm}`;
   document.getElementById('bigdate').textContent =
     `${DAYS[wd]}  ${String(d).padStart(2,'0')} ${MONTHS[mo]} ${y}`;
 

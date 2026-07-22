@@ -58,7 +58,7 @@ graph TD
 |-----------|---------------|
 | **Ultra-low power** | E-paper hibernates between 60s redraws; BLE advertising only |
 | **Offline-first** | Software clock ticks locally after initial BLE sync |
-| **24-hour time** | Both firmware and web app use 24h format (0–23) throughout |
+| **12-hour time** | Both firmware and web app convert hours (0–23) to 12-hour format (1–12) for display |
 | **Dot-matrix aesthetic** | Custom 5×7 font rendered as circles on a 20×17 grid |
 
 ---
@@ -495,6 +495,7 @@ Use this template when planning a new feature. Copy it into your `implementation
 
 | Date | Version | Author | Changes |
 |------|---------|--------|---------|
+| 2026-07-22 | 1.1 | AI-Assisted | Updated dot-matrix display rendering in firmware (`NSL_Watch_nRF54L15.ino`) and web app canvas (`NSL_web.html`) to 12-hour format (1–12) with AM/PM indicator in web UI. |
 | 2026-07-22 | 1.0 | AI-Assisted | Initial SOP created. Fixed BLE UUID mismatch and device name filter in web app. Documented full system architecture, BLE protocol, wiring, build procedure, and AI development workflow. |
 
 ---
