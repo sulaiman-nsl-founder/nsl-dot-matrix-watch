@@ -50,8 +50,8 @@ GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT> display(
 );
 
 // ── BLE UUIDs ─────────────────────────────────────────────────────────────────
-#define TIME_SERVICE_UUID  "aa9a7856-3412-3412-3412-341278563412"
-#define TIME_CHAR_UUID     "ab9a7856-3412-3412-3412-341278563412"
+#define TIME_SERVICE_UUID  "12345678-1234-1234-1234-123456789aaa"
+#define TIME_CHAR_UUID     "12345678-1234-1234-1234-123456789aab"
 
 BLEService        timeSvc(TIME_SERVICE_UUID);
 BLECharacteristic timeChar(TIME_CHAR_UUID);
@@ -242,7 +242,7 @@ void setup()
 
   // ── BLE stack ─────────────────────────────────────────────────────────────
   Bluefruit.begin();
-  Bluefruit.setName("NslWatch");
+  Bluefruit.setName("NslWa");
   Bluefruit.setTxPower(4);
 
   Bluefruit.Periph.setConnectCallback(connectCallback);
