@@ -146,8 +146,12 @@ void drawWatchface() {
 
   display.hibernate();   // panel deep sleep between redraws (saves power)
 
+  // Convert hour to 12-hour format for serial log
+  int displayHourLog = clk.h % 12;
+  if (displayHourLog == 0) displayHourLog = 12;
+
   Serial.print("[EPD] Updated ");
-  Serial.print(clk.h); Serial.print(":");
+  Serial.print(displayHourLog); Serial.print(":");
   if (clk.m < 10) Serial.print("0");
   Serial.println(clk.m);
 }
@@ -189,8 +193,10 @@ void timeWriteCallback(uint16_t conn_handle,
     clk.wd=wd; clk.d=d; clk.mo=mo; clk.y=y;
     timeReceived = true;
     needsRedraw  = true;
+    int displayH = h % 12;
+    if (displayH == 0) displayH = 12;
     Serial.print("[BLE] Time set ");
-    Serial.print(h); Serial.print(":");
+    Serial.print(displayH); Serial.print(":");
     if (m < 10) Serial.print("0");
     Serial.println(m);
   } else {
