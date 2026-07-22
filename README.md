@@ -46,7 +46,7 @@ Select the XIAO nRF54L15 board before uploading.
 The firmware advertises as:
 
 ```text
-NslWatch
+NslWa
 ```
 
 The companion app sends a writable text packet:
@@ -70,7 +70,7 @@ Recommended:
 - Chrome on Android
 - Chrome or Edge on desktop
 
-Then click **Connect to Watch** and choose `NslWatch`.
+Then click **Connect to Watch** and choose `NslWa`.
 
 ## GitHub Pages Hosting
 

@@ -3,19 +3,19 @@
 ## Device
 
 ```text
-Name: NslWatch
+Name: NslWa
 ```
 
 ## Service
 
 ```text
-aa9a7856-3412-3412-3412-341278563412
+12345678-1234-1234-1234-123456789aaa
 ```
 
 ## Characteristic
 
 ```text
-ab9a7856-3412-3412-3412-341278563412
+12345678-1234-1234-1234-123456789aab
 ```
 
 Properties:
