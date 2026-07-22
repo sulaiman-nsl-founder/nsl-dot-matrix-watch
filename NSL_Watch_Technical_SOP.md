@@ -193,8 +193,8 @@ Grid Layout (200×200 canvas):
 
 | Attribute | UUID | Properties |
 |-----------|------|------------|
-| **Time Service** | `aa9a7856-3412-3412-3412-341278563412` | — |
-| **Time Characteristic** | `ab9a7856-3412-3412-3412-341278563412` | WRITE, WRITE_NO_RESP, NOTIFY |
+| **Time Service** | `12345678-1234-1234-1234-123456789aaa` | — |
+| **Time Characteristic** | `12345678-1234-1234-1234-123456789aab` | WRITE, WRITE_NO_RESP, NOTIFY |
 
 ### Write Packet Format
 
