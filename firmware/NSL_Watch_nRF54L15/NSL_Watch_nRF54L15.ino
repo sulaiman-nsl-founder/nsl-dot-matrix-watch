@@ -13,8 +13,8 @@
  *   MOSI → PIN_SPI_MOSI
  *
  * BLE Time Sync (nRF Connect / custom app):
- *   Service  UUID : aa9a7856-3412-3412-3412-341278563412
- *   Char UUID     : ab9a7856-3412-3412-3412-341278563412
+ *   Service  UUID : 12345678-1234-1234-1234-123456789aaa
+ *   Char UUID     : 12345678-1234-1234-1234-123456789aab
  *   Write format  : "H:M:S:WD:D:MO:Y"  e.g. "14:35:00:3:15:6:2026"
  *
  * Known nRF54L15 constraints (from lolren core):
@@ -25,7 +25,7 @@
  *   - No Serial.printf() — use Serial.print() chains
  *
  * How to sync time via nRF Connect app:
- *   1. Scan → connect to "Nsl Watch"
+ *   1. Scan → connect to "NslWa"
  *   2. Find the time characteristic [W WNR]
  *   3. Write (UTF-8 / Text) → "14:35:00:3:15:6:2026"
  *      fields: hour:min:sec:weekday(0=Sun):day:month:year
@@ -50,8 +50,8 @@ GxEPD2_BW<GxEPD2_154_D67, GxEPD2_154_D67::HEIGHT> display(
 );
 
 // ── BLE UUIDs ─────────────────────────────────────────────────────────────────
-#define TIME_SERVICE_UUID  "aa9a7856-3412-3412-3412-341278563412"
-#define TIME_CHAR_UUID     "ab9a7856-3412-3412-3412-341278563412"
+#define TIME_SERVICE_UUID  "12345678-1234-1234-1234-123456789aaa"
+#define TIME_CHAR_UUID     "12345678-1234-1234-1234-123456789aab"
 
 BLEService        timeSvc(TIME_SERVICE_UUID);
 BLECharacteristic timeChar(TIME_CHAR_UUID);
@@ -238,7 +238,7 @@ void setup()
 
   // ── BLE stack ─────────────────────────────────────────────────────────────
   Bluefruit.begin();
-  Bluefruit.setName("NslWatch");
+  Bluefruit.setName("NslWa");
   Bluefruit.setTxPower(4);
 
   Bluefruit.Periph.setConnectCallback(connectCallback);
@@ -264,7 +264,7 @@ void setup()
   Bluefruit.Advertising.setFastTimeout(30);
   Bluefruit.Advertising.start(0);
 
-  Serial.println("[BLE] Advertising as 'Nsl Watch'");
+  Serial.println("[BLE] Advertising as 'NslWa'");
   Serial.println("[BLE] Write format:  H:M:S:WD:D:MO:Y");
   Serial.println("[BLE] Example:       14:35:00:3:15:6:2026");
 }

@@ -116,7 +116,7 @@
 const SVC  = '12345678-1234-1234-1234-123456789aaa';
 const CHAR = '12345678-1234-1234-1234-123456789aab';
   
-  let bleDevice=null, bleChar=null, autoTimer=null;
+  let bleDevice=null, bleChar=null, autoTimer=null, syncBusy=false;
 
 // ── 5×7 font ────────────────────────────────────────────────────
 const FONT = [
@@ -229,6 +229,26 @@ function setSt(txt, state) {
   document.getElementById('sdot').className = 'sdot'+(state==='ok'?' ok':state==='err'?' err':'');
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function connectGattWithRetry(device, attempts=2) {
+  let lastError;
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      log(i === 1 ? 'Connecting...' : `Retrying connection (${i}/${attempts})...`);
+      return await device.gatt.connect();
+    } catch (e) {
+      lastError = e;
+      log(`Connection attempt ${i} failed: ${e.message}`, 'err');
+      if (device.gatt.connected) device.gatt.disconnect();
+      await sleep(1200);
+    }
+  }
+  throw lastError;
+}
+
 // ── BLE ──────────────────────────────────────────────────────────
 async function connectBLE() {
   if (!navigator.bluetooth) {
@@ -244,7 +264,7 @@ async function connectBLE() {
     bleDevice.addEventListener('gattserverdisconnected', onDisc);
     console.log("Found device:", bleDevice.name);
     log(`Found: ${bleDevice.name}`, 'ok');
-    const srv  = await bleDevice.gatt.connect();
+    const srv  = await connectGattWithRetry(bleDevice, 3);
     const svc  = await srv.getPrimaryService(SVC);
     console.log("Service found");
     bleChar    = await svc.getCharacteristic(CHAR);
@@ -263,6 +283,8 @@ async function connectBLE() {
 
 async function syncTime() {
   if (!bleChar) { log('Not connected','err'); return; }
+  if (syncBusy) return;
+  syncBusy = true;
   try {
     const n=new Date();
     const pkt=[n.getHours(),n.getMinutes(),n.getSeconds(),
@@ -270,6 +292,7 @@ async function syncTime() {
     await bleChar.writeValue(new TextEncoder().encode(pkt));
     log(`Synced: ${pkt}`,'ok');
   } catch(e) { log(`Sync failed: ${e.message}`,'err'); }
+  finally { syncBusy = false; }
 }
 
 function disconnectBLE() {
@@ -278,7 +301,7 @@ function disconnectBLE() {
 }
 
 function onDisc() {
-  bleChar=null; setSt('DISCONNECTED','');
+  bleChar=null; syncBusy=false; setSt('DISCONNECTED','');
   document.getElementById('btnS').disabled=true;
   document.getElementById('btnC').querySelector('span').textContent='⬡ Connect to Watch';
   document.getElementById('btnC').onclick=connectBLE;
