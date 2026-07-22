@@ -1,49 +1,52 @@
 # NSL Dot Matrix Watch
 
-BLE-synced dot-matrix watchface for a XIAO ESP32S3 and a 1.54 inch 200x200 e-paper display.
+BLE-synced dot-matrix watchface for a XIAO nRF54L15 and a 1.54 inch 200x200 e-paper display.
 
 The watch renders a full ghost-dot grid on the e-paper panel, fills active dots for the current hour and minute, and shows the date below the grid. A small Web Bluetooth companion app syncs the current browser/device time to the watch.
 
 ## Hardware
 
-- Seeed Studio XIAO ESP32S3
+- Seeed Studio XIAO nRF54L15
 - WeAct 1.54 inch e-paper display, 200x200
 - GxEPD2 display driver: `GxEPD2_154_D67`
 
 ## Wiring
 
-| E-paper pin | XIAO ESP32S3 pin |
+| E-paper pin | XIAO nRF54L15 pin |
 | --- | --- |
-| SDA / MOSI | D10 / GPIO9 |
-| SCL / SCK | D8 / GPIO7 |
-| CS | D6 / GPIO6 |
-| DC | D5 / GPIO5 |
-| RES | D4 / GPIO4 |
-| BUSY | D2 / GPIO2 |
+| BUSY | D0 / `PIN_D0` |
+| CS | D1 / `PIN_D1` |
+| DC | D2 / `PIN_D2` |
+| RES | D3 / `PIN_D3` |
+| SCK | `PIN_SPI_SCK` |
+| MOSI | `PIN_SPI_MOSI` |
 
 ## Project Structure
 
 ```text
-firmware/watchface/watchface.ino  Arduino firmware for the watch
-web_app/NSL_web.html              Web Bluetooth companion app
-docs/PROTOCOL.md                  BLE packet format and UUIDs
+firmware/NSL_Watch_nRF54L15/NSL_Watch_nRF54L15.ino  Current Arduino firmware for XIAO nRF54L15
+firmware/watchface/watchface.ino                     Legacy ESP32S3 firmware
+web_app/NSL_web.html                                 Web Bluetooth companion app
+docs/PROTOCOL.md                                     BLE packet format and UUIDs
 ```
 
 ## Arduino Libraries
 
+Use the `lolren/nrf54-arduino-core` board package for XIAO nRF54L15.
+
 Install these from the Arduino Library Manager:
 
 - `GxEPD2`
-- ESP32 BLE libraries from the ESP32 board package
+- Bluefruit compatibility support from the nRF54 board core
 
-Also install the ESP32 board package and select the XIAO ESP32S3 board before uploading.
+Select the XIAO nRF54L15 board before uploading.
 
 ## BLE Sync
 
 The firmware advertises as:
 
 ```text
-Nsl Watch
+NslWatch
 ```
 
 The companion app sends a writable text packet:
@@ -67,7 +70,7 @@ Recommended:
 - Chrome on Android
 - Chrome or Edge on desktop
 
-Then click **Connect to Watch** and choose `Nsl Watch`.
+Then click **Connect to Watch** and choose `NslWatch`.
 
 ## GitHub Pages Hosting
 

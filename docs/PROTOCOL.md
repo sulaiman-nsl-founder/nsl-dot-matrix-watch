@@ -3,19 +3,19 @@
 ## Device
 
 ```text
-Name: Nsl Watch
+Name: NslWatch
 ```
 
 ## Service
 
 ```text
-12345678-1234-1234-1234-123456789abc
+aa9a7856-3412-3412-3412-341278563412
 ```
 
 ## Characteristic
 
 ```text
-abcd1234-ab12-cd34-ef56-abcdef123456
+ab9a7856-3412-3412-3412-341278563412
 ```
 
 Properties:
@@ -48,4 +48,3 @@ Example packet:
 ```text
 14:35:22:3:22:7:2026
 ```
-
