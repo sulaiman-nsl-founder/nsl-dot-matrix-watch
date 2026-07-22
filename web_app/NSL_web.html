@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Nsl Watch</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600&display=swap');
+  :root {
+    --bg:#0a0a0a; --surface:#111; --border:#222;
+    --on:#e0e0e0; --ghost:rgba(255,255,255,0.13); --ghost-s:rgba(255,255,255,0.25);
+    --green:#44ff88; --red:#ff4444; --dim:#444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:#aaa;font-family:'Rajdhani',sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:24px 16px 48px;gap:18px}
+
+  header{text-align:center}
+  .brand{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:6px;color:var(--dim)}
+  .title{font-size:24px;font-weight:600;letter-spacing:3px;color:#ccc}
+
+  /* ── Watch shell ── */
+  .shell{
+    width:182px;height:214px;
+    background:linear-gradient(150deg,#262626,#111);
+    border-radius:22px;border:1.5px solid #2a2a2a;
+    box-shadow:0 24px 60px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.04);
+    display:flex;align-items:center;justify-content:center
+  }
+  /* Screen canvas: 150×150 represents the 200×200 display at 75% scale */
+  canvas#screen{
+    width:150px;height:150px;
+    image-rendering:pixelated;
+    border-radius:2px;
+    display:block
+  }
+
+  /* ── Status ── */
+  .srow{display:flex;align-items:center;gap:8px;
+    font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px}
+  .sdot{width:7px;height:7px;border-radius:50%;background:var(--dim);transition:all .3s}
+  .sdot.ok{background:var(--green);box-shadow:0 0 6px var(--green)}
+  .sdot.err{background:var(--red)}
+  #stxt{color:var(--dim)}
+
+  /* ── Live time ── */
+  .bigtime{font-family:'Share Tech Mono',monospace;font-size:36px;
+    color:#ddd;letter-spacing:4px;text-align:center;line-height:1}
+  .bigdate{font-family:'Share Tech Mono',monospace;font-size:11px;
+    color:var(--dim);letter-spacing:2px;text-align:center}
+
+  /* ── Buttons ── */
+  .btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px}
+  .btn{width:100%;padding:14px;background:transparent;border:1px solid var(--border);
+    border-radius:7px;color:#aaa;font-family:'Rajdhani',sans-serif;font-size:14px;
+    font-weight:600;letter-spacing:3px;text-transform:uppercase;cursor:pointer;
+    transition:all .2s;position:relative;overflow:hidden}
+  .btn::before{content:'';position:absolute;inset:0;background:#aaa;
+    transform:scaleX(0);transform-origin:left;transition:transform .2s;z-index:0}
+  .btn span{position:relative;z-index:1}
+  .btn:hover::before{transform:scaleX(1)}.btn:hover{color:#000}
+  .btn:disabled{opacity:.3;cursor:not-allowed}
+  .btn:disabled::before{display:none}.btn:disabled:hover{color:#aaa}
+  .bsync{border-color:var(--green);color:var(--green)}
+  .bsync::before{background:var(--green)}
+
+  .autolbl{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:1px}
+  .autolbl.on{color:var(--green)}
+  .divider{width:100%;max-width:300px;height:1px;background:var(--border)}
+
+  .log{width:100%;max-width:300px;background:#0d0d0d;border:1px solid var(--border);
+    border-radius:7px;padding:10px;font-family:'Share Tech Mono',monospace;
+    font-size:10px;color:var(--dim);line-height:1.8;max-height:100px;overflow-y:auto}
+  .lok{color:var(--green)}.lerr{color:var(--red)}.linfo{color:#555}
+
+  #nosup{display:none;background:#1a0000;border:1px solid var(--red);border-radius:8px;
+    padding:14px;color:var(--red);font-size:12px;text-align:center;
+    max-width:300px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">companion app</div>
+  <div class="title">NSL WATCH</div>
+</header>
+
+<div class="shell">
+  <canvas id="screen" width="200" height="200"></canvas>
+</div>
+
+<div class="srow">
+  <div class="sdot" id="sdot"></div>
+  <span id="stxt">DISCONNECTED</span>
+</div>
+
+<div>
+  <div class="bigtime" id="bigtime">--:--:--</div>
+  <div class="bigdate" id="bigdate">--- -- --- ----</div>
+</div>
+
+<div id="nosup"></div>
+
+<div class="btns">
+  <button class="btn" id="btnC" onclick="connectBLE()"><span>⬡ Connect to Watch</span></button>
+  <button class="btn bsync" id="btnS" onclick="syncTime()" disabled><span>⟳ Sync Time Now</span></button>
+</div>
+
+<div class="autolbl" id="autolbl">AUTO-SYNC: OFF</div>
+<div class="divider"></div>
+<div class="log" id="log"><div class="linfo">// ready. connect to begin.</div></div>
+
+<script>
+// ── BLE ──────────────────────────────────────────────────────────
+const SVC  = 'aa9a7856-3412-3412-3412-341278563412';
+const CHAR = 'ab9a7856-3412-3412-3412-341278563412';
+  
+  let bleDevice=null, bleChar=null, autoTimer=null;
+
+// ── 5×7 font ────────────────────────────────────────────────────
+const FONT = [
+  [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,1,1],[1,0,1,0,1],[1,1,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
+  [[0,0,1,0,0],[0,1,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,1,0]],
+  [[0,1,1,1,0],[1,0,0,0,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,1,1,1,1]],
+  [[1,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[0,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0]],
+  [[0,0,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,0,1,0],[1,1,1,1,1],[0,0,0,1,0],[0,0,0,1,0]],
+  [[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0]],
+  [[0,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
+  [[1,1,1,1,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[0,1,0,0,0],[0,1,0,0,0]],
+  [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0]],
+  [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,1],[0,0,0,0,1],[0,0,0,0,1],[0,1,1,1,0]],
+];
+const DAYS   = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+// ── Canvas renderer — mirrors exact e-ink layout ─────────────────
+const canvas = document.getElementById('screen');
+const ctx    = canvas.getContext('2d');
+
+// Same constants as Arduino
+const DOT_R    = 4;
+const STEP     = 10;
+const GRID_C   = 20;
+const GRID_R   = 17;
+const ORIG_X   = 5;
+const ORIG_Y   = 5;
+const D1_COL   = 4;
+const D2_COL   = 11;
+const H_ROW    = 1;
+const M_ROW    = 10;
+
+function cx(col) { return ORIG_X + col * STEP; }
+function cy(row) { return ORIG_Y + row * STEP; }
+
+function drawDot(col, row, filled) {
+  ctx.beginPath();
+  ctx.arc(cx(col), cy(row), DOT_R, 0, Math.PI * 2);
+  if (filled) {
+    ctx.fillStyle = '#e0e0e0';
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+// Build active dot set for a digit at given grid start col/row
+function activeSet(digit, startCol, startRow) {
+  const set = new Set();
+  for (let r = 0; r < 7; r++)
+    for (let c = 0; c < 5; c++)
+      if (FONT[digit][r][c])
+        set.add(`${startCol+c},${startRow+r}`);
+  return set;
+}
+
+function renderWatch(h, m, wd, d, mo, y) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 200, 200);
+
+  // Build active pixel set
+  const active = new Set([
+    ...activeSet(Math.floor(h/10), D1_COL, H_ROW),
+    ...activeSet(h%10,             D2_COL, H_ROW),
+    ...activeSet(Math.floor(m/10), D1_COL, M_ROW),
+    ...activeSet(m%10,             D2_COL, M_ROW),
+  ]);
+
+  // Draw full ghost grid, overlay active dots
+  for (let r = 0; r < GRID_R; r++)
+    for (let c = 0; c < GRID_C; c++)
+      drawDot(c, r, active.has(`${c},${r}`));
+
+  // Date text
+  const dateStr = `${DAYS[wd]} ${String(d).padStart(2,'0')} ${MONTHS[mo]} ${y}`;
+  ctx.font = 'bold 9px "Share Tech Mono", monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.textAlign = 'center';
+  ctx.fillText(dateStr, 100, 192);
+}
+
+// ── Clock tick ───────────────────────────────────────────────────
+function tick() {
+  const n = new Date();
+  const h=n.getHours(), m=n.getMinutes(), s=n.getSeconds();
+  const wd=n.getDay(), d=n.getDate(), mo=n.getMonth(), y=n.getFullYear();
+
+  document.getElementById('bigtime').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('bigdate').textContent =
+    `${DAYS[wd]}  ${String(d).padStart(2,'0')} ${MONTHS[mo]} ${y}`;
+
+  renderWatch(h, m, wd, d, mo, y);
+}
+
+// ── Log ──────────────────────────────────────────────────────────
+function log(msg, t='info') {
+  const box=document.getElementById('log');
+  const n=new Date(), ts=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+  const el=document.createElement('div');
+  el.className='l'+t; el.textContent=`[${ts}] ${msg}`;
+  box.appendChild(el); box.scrollTop=box.scrollHeight;
+}
+
+function setSt(txt, state) {
+  document.getElementById('stxt').textContent = txt;
+  document.getElementById('sdot').className = 'sdot'+(state==='ok'?' ok':state==='err'?' err':'');
+}
+
+// ── BLE ──────────────────────────────────────────────────────────
+async function connectBLE() {
+  if (!navigator.bluetooth) {
+    document.getElementById('nosup').style.display='block';
+    document.getElementById('nosup').innerHTML='⚠️ Web Bluetooth not supported.<br>Use Chrome on Android or Chrome desktop.';
+    return;
+  }
+  try {
+    log('Scanning for Nsl Watch...'); setSt('SCANNING...','');
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters:[{name:'NslWatch'}], optionalServices:[SVC]
+    });
+    bleDevice.addEventListener('gattserverdisconnected', onDisc);
+    console.log("Found device:", bleDevice.name);
+    log(`Found: ${bleDevice.name}`, 'ok');
+    const srv  = await bleDevice.gatt.connect();
+    const svc  = await srv.getPrimaryService(SVC);
+    console.log("Service found");
+    bleChar    = await svc.getCharacteristic(CHAR);
+    console.log("Characteristic found");
+    log('Ready', 'ok');
+    setSt('CONNECTED','ok');
+    document.getElementById('btnS').disabled=false;
+    document.getElementById('btnC').querySelector('span').textContent='⬡ Disconnect';
+    document.getElementById('btnC').onclick=disconnectBLE;
+    await syncTime();
+    autoTimer=setInterval(syncTime,60000);
+    document.getElementById('autolbl').textContent='AUTO-SYNC: 60s';
+    document.getElementById('autolbl').className='autolbl on';
+  } catch(e) { log(`Error: ${e.message}`,'err'); setSt('ERROR','err'); }
+}
+
+async function syncTime() {
+  if (!bleChar) { log('Not connected','err'); return; }
+  try {
+    const n=new Date();
+    const pkt=[n.getHours(),n.getMinutes(),n.getSeconds(),
+               n.getDay(),n.getDate(),n.getMonth()+1,n.getFullYear()].join(':');
+    await bleChar.writeValue(new TextEncoder().encode(pkt));
+    log(`Synced: ${pkt}`,'ok');
+  } catch(e) { log(`Sync failed: ${e.message}`,'err'); }
+}
+
+function disconnectBLE() {
+  if (bleDevice?.gatt.connected) bleDevice.gatt.disconnect();
+  clearInterval(autoTimer); onDisc();
+}
+
+function onDisc() {
+  bleChar=null; setSt('DISCONNECTED','');
+  document.getElementById('btnS').disabled=true;
+  document.getElementById('btnC').querySelector('span').textContent='⬡ Connect to Watch';
+  document.getElementById('btnC').onclick=connectBLE;
+  document.getElementById('autolbl').textContent='AUTO-SYNC: OFF';
+  document.getElementById('autolbl').className='autolbl';
+  clearInterval(autoTimer); log('Disconnected','err');
+}
+
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
