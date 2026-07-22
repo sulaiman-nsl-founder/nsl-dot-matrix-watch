@@ -108,9 +108,13 @@ void drawWatchface() {
       for (int c = 0; c < GRID_COLS; c++)
         display.drawCircle(CX(c), CY(r), DOT_R, GxEPD_WHITE);
 
+    // Convert hour to 12-hour format for display (1..12)
+    int displayHour = clk.h % 12;
+    if (displayHour == 0) displayHour = 12;
+
     // 2. Overlay active digit pixels (filled circles overwrite outlines)
-    overlayDigit(clk.h / 10, D1_COL, H_ROW);
-    overlayDigit(clk.h % 10, D2_COL, H_ROW);
+    overlayDigit(displayHour / 10, D1_COL, H_ROW);
+    overlayDigit(displayHour % 10, D2_COL, H_ROW);
     overlayDigit(clk.m / 10, D1_COL, M_ROW);
     overlayDigit(clk.m % 10, D2_COL, M_ROW);
 
